@@ -408,7 +408,7 @@ div#header {
 div#header div.logo-img {
 	height: 50px;
     margin: 2px 0 0 -30px;
-    background-image: url("chrome-extension://iimebfhjeohhlhpkmmkijbjboplabagk/images/sprite-sb-icons-22.png");
+    background-image: url("chrome-extension://__MSG_@@extension_id__/images/sprite-sb-icons-22.png");
     background-position: -250px 0;
     width: 250px;
     float: left;
