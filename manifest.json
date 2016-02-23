@@ -1,12 +1,12 @@
 {
-	"name": "__MSG_extName__",
-	"version": "0.9.7.1",
+	"name": "Sportsbet bookmarks extension",
+	"version": "0.0.1",
 	"manifest_version": 2,
-	"description": "__MSG_extDesc__",
+	"description": "This extension adds features for Sportsbet bookmarks.",
 	"icons": {
-		"16": "images/icon/icon16.png",
-		"48": "images/icon/icon48.png",
-		"128": "images/icon/icon128.png"
+		"16": "images/icon/icon_16.png",
+		"48": "images/icon/icon_48.png",
+		"128": "images/icon/icon_128.png"
 	},
 	"browser_action": {
 		"default_icon": "images/icon/icon.png",

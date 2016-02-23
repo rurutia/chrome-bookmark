@@ -6,7 +6,7 @@ function init() {
 	if (localStorage.popupWidth) document.body.style.width = localStorage.popupWidth + 'px';
 };
 
-(function(window){
+(function(window, defaultBar){
 	var abc = 'abc';
 	// var document = window.document;
 	var chrome = window.chrome;
@@ -17,7 +17,7 @@ function init() {
 	console.log("chrome.i18n.getMessage");
 	console.log(_m);
 	var _b = chrome.extension.getBackgroundPage().console;
-	
+
 	// Error alert
 	var AlertDialog = {
 		open: function(dialog){
@@ -33,11 +33,11 @@ function init() {
 	window.addEventListener('error', function(){
 		AlertDialog.open('<strong>' + _m('errorOccured') + '</strong><br>' + _m('reportedToDeveloper'));
 	}, false);
-	
+
 	// Platform detection
 	var os = (navigator.platform.toLowerCase().match(/mac|win|linux/i) || ['other'])[0];
 	body.addClass(os);
-	
+
 	// Chrome version detection
 	var version = (function(){
 		var v = {};
@@ -49,7 +49,7 @@ function init() {
 		});
 		return v;
 	})();
-	
+
 	// Some i18n
 	$('search-input').placeholder = _m('searchBookmarks');
 	$('edit-dialog-name').placeholder = _m('name');
@@ -72,11 +72,11 @@ function init() {
 		if (el.tagName == 'COMMAND') el.label = m;
 		el.textContent = m;
 	});
-	
+
 	// RTL indicator
 	var rtl = (body.getComputedStyle('direction') == 'rtl');
 	if (rtl) body.addClass('rtl');
-	
+
 	// Init some variables
 	var opens = localStorage.opens ? JSON.parse(localStorage.opens) : [];
 	console.log("opens.....");
@@ -84,7 +84,7 @@ function init() {
 	var rememberState = !localStorage.dontRememberState;
 	var a = document.createElement('a');
 	var httpsPattern = /^https?:\/\//i;
-	
+
 	// Adaptive bookmark tooltips
 	var adaptBookmarkTooltips = function(){
 		var bookmarks = document.querySelectorAll('li.child a');
@@ -105,15 +105,28 @@ function init() {
 			}
 		}
 	};
-	
+
 	var $tree = $('tree');
 
 	chrome.bookmarks.getTree(function(tree){
-		$tree.innerHTML = generateHTML(tree[0].children, rememberState, opens);
-		
+		console.log("tree childern");
+		console.log(tree[0].children);
+		var bars = tree[0].children;
+		var sbBar = {
+			id: "-1",
+			parentId: "0",
+			index: 0,
+			title: "Sportsbet Bookmarks Bar",
+			dateAdded: 1435705527287,
+			dateGroupModified: 1456177590837,
+			children: defaultBar
+		};
+		bars.unshift(sbBar);
+		$tree.innerHTML = generateHTML(bars, rememberState, opens);
+
 		// recall scroll position (from top of popup) when tree opened
 		if (rememberState) $tree.scrollTop = localStorage.scrollTop || 0;
-		
+
 		var focusID = localStorage.focusID;
 		if (focusID){
 			var focusEl = $('neat-tree-item-' + focusID);
@@ -130,12 +143,12 @@ function init() {
 				}, 4000);
 			}
 		}
-		
+
 		setTimeout(adaptBookmarkTooltips, 100);
-		
+
 		tree = null;
 	});
-	
+
 	// Events for the tree
 	$tree.addEventListener('scroll', function(){
 		localStorage.scrollTop = $tree.scrollTop; // store scroll position at each scroll event
@@ -166,15 +179,28 @@ function init() {
 		var children = parent.querySelector('ul');
 		if (!children){
 			var id = parent.id.replace('neat-tree-item-', '');
-			chrome.bookmarks.getChildren(id, function(children){
-				var html = generateHTML(children, rememberState, opens, parseInt(parent.parentNode.dataset.level) + 1);
-				var div = document.createElement('div');
-				div.innerHTML = html;
-				var ul = div.querySelector('ul');
-				ul.inject(parent);
-				div.destroy();
-				setTimeout(adaptBookmarkTooltips, 100);
-			});
+			if(id > 0) {
+				chrome.bookmarks.getChildren(id, function(children){
+					var html = generateHTML(children, rememberState, opens, parseInt(parent.parentNode.dataset.level) + 1);
+					var div = document.createElement('div');
+					div.innerHTML = html;
+					var ul = div.querySelector('ul');
+					ul.inject(parent);
+					div.destroy();
+					setTimeout(adaptBookmarkTooltips, 100);
+				});
+			} else {
+				var children = getGroupById(defaultBar, id);
+				console.log(children);
+				console.log(opens);
+				// var html = generateHTML(children, rememberState, opens, parseInt(parent.parentNode.dataset.level) + 1);
+				// var div = document.createElement('div');
+				// div.innerHTML = html;
+				// var ul = div.querySelector('ul');
+				// ul.inject(parent);
+				// div.destroy();
+				// setTimeout(adaptBookmarkTooltips, 100);
+			}
 		}
 		if (closeUnusedFolders && expanded){
 			var siblings = parent.getSiblings('li');
@@ -199,13 +225,13 @@ function init() {
 		if (tagName != 'A' && tagName != 'SPAN') return;
 		el.focus();
 	});
-	
+
 	// Search
 	var $results = $('results');
 	var searchMode = false;
 	var searchInput = $('search-input');
 	var prevValue = '';
-	
+
 	var search = function(){
 		var value = searchInput.value.trim();
 		localStorage.searchQuery = value;
@@ -252,7 +278,7 @@ function init() {
 			$tree.style.display = 'none';
 			$results.innerHTML = html;
 			$results.style.display = 'block';
-			
+
 			var lis = $results.querySelectorAll('li');
 			Array.forEach(function(li){
 				var parentId = li.dataset.parentid;
@@ -262,14 +288,14 @@ function init() {
 					a.title = _m('parentFolder', node[0].title) + '\n' + a.title;
 				});
 			}, lis);
-			
+
 			results = null;
 			vPattern = null;
 			lis = null;
 		});
 	};
 	searchInput.addEventListener('input', search);
-	
+
 	searchInput.addEventListener('keydown', function(e){
 		var key = e.keyCode;
 		var focusID = localStorage.focusID;
@@ -310,14 +336,14 @@ function init() {
 			search();
 		}
 	});
-	
+
 	searchInput.addEventListener('focus', function(){
 		body.addClass('searchFocus');
 	});
 	searchInput.addEventListener('blur', function(){
 		body.removeClass('searchFocus');
 	});
-	
+
 	// Saved search query
 	if (rememberState && localStorage.searchQuery){
 		searchInput.value = localStorage.searchQuery;
@@ -325,7 +351,7 @@ function init() {
 		searchInput.select();
 		searchInput.scrollLeft = 0;
 	}
-	
+
 	// Popup auto-height
 	var resetHeight = function(){
 		var zoomLevel = localStorage.zoom ? localStorage.zoom.toInt() / 100 : 1;
@@ -345,18 +371,18 @@ function init() {
 	if (!searchMode) resetHeight();
 	$tree.addEventListener('click', resetHeight);
 	$tree.addEventListener('keyup', resetHeight);
-	
+
 	// Confirm dialog event listeners
 	$('confirm-dialog-button-1').addEventListener('click', function(){
 		ConfirmDialog.fn1();
 		ConfirmDialog.close();
 	}, false);
-	
+
 	$('confirm-dialog-button-2').addEventListener('click', function(){
 		ConfirmDialog.fn2();
 		ConfirmDialog.close();
 	}, false);
-	
+
 	// Confirm dialog
 	var ConfirmDialog = {
 		open: function(opts){
@@ -375,7 +401,7 @@ function init() {
 		fn1: function(){},
 		fn2: function(){}
 	};
-	
+
 	// Edit dialog event listener
 	$('edit-dialog').addEventListener('submit', function(){
 		EditDialog.close();
@@ -419,7 +445,7 @@ function init() {
 		},
 		fn: function(){}
 	};
-	
+
 	// Bookmark handling
 	var dontConfirmOpenFolder = !!localStorage.dontConfirmOpenFolder;
 	var bookmarkClickStayOpen = !!localStorage.bookmarkClickStayOpen;
@@ -438,7 +464,7 @@ function init() {
 				if (!bookmarkClickStayOpen) setTimeout(window.close, 200);
 			});
 		},
-		
+
 		openBookmarkNewTab: function(url, selected, blankTabCheck){
 			var open = function(){
 				chrome.tabs.create({
@@ -461,14 +487,14 @@ function init() {
 				open();
 			}
 		},
-		
+
 		openBookmarkNewWindow: function(url, incognito){
 			chrome.windows.create({
 				url: url,
 				incognito: incognito
 			});
 		},
-		
+
 		openBookmarks: function(urls, selected){
 			var urlsLen = urls.length;
 			var open = function(){
@@ -494,7 +520,7 @@ function init() {
 				open();
 			}
 		},
-		
+
 		openBookmarksNewWindow: function(urls, incognito){
 			var urlsLen = urls.length;
 			var open = function(){
@@ -515,7 +541,7 @@ function init() {
 				open();
 			}
 		},
-		
+
 		editBookmarkFolder: function(id){
 			chrome.bookmarks.get(id, function(nodeList){
 				if (!nodeList.length) return;
@@ -557,7 +583,7 @@ function init() {
 				});
 			});
 		},
-		
+
 		deleteBookmark: function(id){
 			var li1 = $('neat-tree-item-' + id);
 			var li2 = $('results-item-' + id);
@@ -574,7 +600,7 @@ function init() {
 				}
 			});
 		},
-		
+
 		deleteBookmarks: function(id, bookmarkCount, folderCount){
 			var li = $('neat-tree-item-' + id);
 			var item = li.querySelector('span');
@@ -612,7 +638,7 @@ function init() {
 			}
 		}
 	};
-	
+
 	var middleClickBgTab = !!localStorage.middleClickBgTab;
 	var leftClickNewTab = !!localStorage.leftClickNewTab;
 	var noOpenBookmark = false;
@@ -640,18 +666,34 @@ function init() {
 		} else if (el.tagName == 'SPAN'){
 			var li = el.parentNode;
 			var id = li.id.replace('neat-tree-item-', '');
-			chrome.bookmarks.getChildren(id, function(children){
+			if(id > 0) {
+				chrome.bookmarks.getChildren(id, function(children){
+					var urls = Array.map(function(c){
+						return c.url;
+					}, children).clean();
+					var urlsLen = urls.length;
+					if (!urlsLen) return;
+					if (ctrlMeta){ // ctrl/meta click
+						actions.openBookmarks(urls, middleClickBgTab ? shift : !shift);
+					} else if (shift){ // shift click
+						actions.openBookmarksNewWindow(urls);
+					}
+				});
+			} else {
+				var children = getGroupById(defaultBar, id);
+				console.log(children);
 				var urls = Array.map(function(c){
-					return c.url;
-				}, children).clean();
-				var urlsLen = urls.length;
-				if (!urlsLen) return;
-				if (ctrlMeta){ // ctrl/meta click
-					actions.openBookmarks(urls, middleClickBgTab ? shift : !shift);
-				} else if (shift){ // shift click
-					actions.openBookmarksNewWindow(urls);
-				}
-			});
+						return c.url;
+					}, children).clean();
+					var urlsLen = urls.length;
+					if (!urlsLen) return;
+					if (ctrlMeta){ // ctrl/meta click
+						actions.openBookmarks(urls, middleClickBgTab ? shift : !shift);
+					} else if (shift){ // shift click
+						actions.openBookmarksNewWindow(urls);
+					}
+			}
+
 		}
 	};
 	$tree.addEventListener('click', bookmarkHandler);
@@ -664,16 +706,16 @@ function init() {
 	};
 	$tree.addEventListener('mouseup', bookmarkHandlerMiddle);
 	$results.addEventListener('mouseup', bookmarkHandlerMiddle);
-	
+
 	// Disable Chrome auto-scroll feature
 	window.addEventListener('mousedown', function(e){
 		if (e.button == 1) e.preventDefault();
 	});
-	
+
 	// Context menu
 	var $bookmarkContextMenu = $('bookmark-context-menu');
 	var $folderContextMenu = $('folder-context-menu');
-	
+
 	var clearMenu = function(e){
 		currentContext = null;
 		var active = body.querySelector('.active');
@@ -690,13 +732,13 @@ function init() {
 		$folderContextMenu.style.left = '-999px';
 		$folderContextMenu.style.opacity = 0;
 	};
-	
+
 	body.addEventListener('click', clearMenu);
 	$tree.addEventListener('scroll', clearMenu);
 	$results.addEventListener('scroll', clearMenu);
 	$tree.addEventListener('focus', clearMenu, true);
 	$results.addEventListener('focus', clearMenu, true);
-	
+
 	var currentContext = null;
 	var macCloseContextMenu = false;
 	body.addEventListener('contextmenu', function(e){
@@ -755,7 +797,7 @@ function init() {
 			clearMenu();
 		}
 	});
-	
+
 	var bookmarkContextHandler = function(e){
 		e.stopPropagation();
 		if (!currentContext) return;
@@ -794,7 +836,7 @@ function init() {
 	$bookmarkContextMenu.addEventListener('click', function(e){
 		e.stopPropagation();
 	});
-	
+
 	var folderContextHandler = function(e){
 		if (!currentContext) return;
 		var el = e.target;
@@ -838,7 +880,7 @@ function init() {
 	$folderContextMenu.addEventListener('click', function(e){
 		e.stopPropagation();
 	});
-	
+
 	// Keyboard navigation
 	var keyBuffer = '', keyBufferTimer;
 	var treeKeyDown = function(e){
@@ -1027,7 +1069,7 @@ function init() {
 	};
 	$tree.addEventListener('keydown', treeKeyDown);
 	$results.addEventListener('keydown', treeKeyDown);
-	
+
 	var treeKeyUp = function(e){
 		var item = document.activeElement;
 		if (!/^(a|span)$/i.test(item.tagName)) item = $tree.querySelector('.focus') || $tree.querySelector('li:first-child>span');
@@ -1053,7 +1095,7 @@ function init() {
 	};
 	$tree.addEventListener('keyup', treeKeyUp);
 	$results.addEventListener('keyup', treeKeyUp);
-	
+
 	var contextKeyDown = function(e){
 		var menu = this;
 		var item = document.activeElement;
@@ -1111,19 +1153,19 @@ function init() {
 	};
 	$bookmarkContextMenu.addEventListener('keydown', contextKeyDown);
 	$folderContextMenu.addEventListener('keydown', contextKeyDown);
-	
+
 	var contextMouseMove = function(e){
 		e.target.focus();
 	};
 	$bookmarkContextMenu.addEventListener('mousemove', contextMouseMove);
 	$folderContextMenu.addEventListener('mousemove', contextMouseMove);
-	
+
 	var contextMouseOut = function(){
 		if (this.style.opacity.toInt()) this.focus();
 	};
 	$bookmarkContextMenu.addEventListener('mouseout', contextMouseOut);
 	$folderContextMenu.addEventListener('mouseout', contextMouseOut);
-	
+
 	// Drag and drop
 	var draggedBookmark = null;
 	var draggedOut = false;
@@ -1341,7 +1383,7 @@ function init() {
 			onDrop();
 		}
 	});
-	
+
 	// Resizer
 	var $resizer = $('resizer');
 	var resizerDown = false;
@@ -1369,7 +1411,7 @@ function init() {
 		resizerDown = false;
 		adaptBookmarkTooltips();
 	});
-	
+
 	// Closing dialogs on escape
 	var closeDialogs = function(){
 			if (body.hasClass('needConfirm')) ConfirmDialog.fn2(); ConfirmDialog.close();
@@ -1386,12 +1428,12 @@ function init() {
 		}
 	});
 	$('cover').addEventListener('click', closeDialogs);
-	
+
 	// Make webkit transitions work only after elements are settled down
 	setTimeout(function(){
 		body.addClass('transitional');
 	}, 10);
-	
+
 	// Zoom
 	if (localStorage.zoom){
 		body.dataset.zoom = localStorage.zoom;
@@ -1434,10 +1476,10 @@ function init() {
 				break;
 		}
 	});
-	
+
 	// Fix stupid Chrome build 536 bug
 	if (version.build >= 536) body.addClass('chrome-536');
-	
+
 	// Fix stupid wrong offset of the page on Mac
 	if (os == 'mac'){
 		setTimeout(function(){
@@ -1445,13 +1487,13 @@ function init() {
 			if (top != 0) body.scrollTop = 0;
 		}, 1500);
 	}
-	
+
 	if (localStorage.userstyle){
 		var style = document.createElement('style');
 		style.textContent = localStorage.userstyle;
 		style.inject(document.body);
 	}
-})(window);
+})(window, defaultBar);
 
 onerror = function(){
 	chrome.extension.sendRequest({error: [].slice.call(arguments)})
