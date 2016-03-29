@@ -23,7 +23,7 @@ var data = [
 	}
 ];
 
-var defaultBar = [];
+var defaultBars = [];
 
 data.forEach(function(group, i) {
 	group.dateAdded = 1435705527287;
@@ -42,7 +42,7 @@ data.forEach(function(group, i) {
 		// group.children.push(item);
 	});
 
-	defaultBar.push(group);
+	defaultBars.push(group);
 });
 
 function getGroupById(data, id) {

@@ -6,8 +6,8 @@ function init() {
 	if (localStorage.popupWidth) document.body.style.width = localStorage.popupWidth + 'px';
 };
 
-(function(window, defaultBar){
-	var abc = 'abc';
+//  defaultBars is from default-bookmarks.js
+(function(window, defaultBars){
 	// var document = window.document;
 	var chrome = window.chrome;
 	// var localStorage = window.localStorage;
@@ -88,6 +88,8 @@ function init() {
 	// Adaptive bookmark tooltips
 	var adaptBookmarkTooltips = function(){
 		var bookmarks = document.querySelectorAll('li.child a');
+		console.log("get bookmarks...");
+		console.log(bookmarks);	
 		for (var i = 0, l = bookmarks.length; i < l; i++){
 			var bookmark = bookmarks[i];
 			if (bookmark.hasClass('titled')){
@@ -110,6 +112,7 @@ function init() {
 
 	chrome.bookmarks.getTree(function(tree){
 		console.log("tree childern");
+		console.log(defaultBars);
 		console.log(tree[0].children);
 		var bars = tree[0].children;
 		var sbBar = {
@@ -119,15 +122,20 @@ function init() {
 			title: "Sportsbet Bookmarks Bar",
 			dateAdded: 1435705527287,
 			dateGroupModified: 1456177590837,
-			children: defaultBar
+			children: defaultBars
 		};
 		bars.unshift(sbBar);
 		$tree.innerHTML = generateHTML(bars, rememberState, opens);
+
+		console.log("rememberState:" + rememberState);
 
 		// recall scroll position (from top of popup) when tree opened
 		if (rememberState) $tree.scrollTop = localStorage.scrollTop || 0;
 
 		var focusID = localStorage.focusID;
+		console.log("focusID:" + focusID);
+
+
 		if (focusID){
 			var focusEl = $('neat-tree-item-' + focusID);
 			if (focusEl){
@@ -151,9 +159,12 @@ function init() {
 
 	// Events for the tree
 	$tree.addEventListener('scroll', function(){
+		console.log("scrolling tree.....");
 		localStorage.scrollTop = $tree.scrollTop; // store scroll position at each scroll event
 	});
 	$tree.addEventListener('focus', function(e){
+		console.log("focusing tree.....");
+
 		var el = e.target;
 		var tagName = el.tagName;
 		var focusEl = $tree.querySelector('.focus');
@@ -165,6 +176,7 @@ function init() {
 			localStorage.focusID = null;
 		}
 	}, true);
+	
 	var closeUnusedFolders = localStorage.closeUnusedFolders;
 	$tree.addEventListener('click', function(e){
 		if (e.button != 0) return;
@@ -190,7 +202,7 @@ function init() {
 					setTimeout(adaptBookmarkTooltips, 100);
 				});
 			} else {
-				var children = getGroupById(defaultBar, id);
+				var children = getGroupById(defaultBars, id);
 				console.log(children);
 				console.log(opens);
 				// var html = generateHTML(children, rememberState, opens, parseInt(parent.parentNode.dataset.level) + 1);
@@ -680,7 +692,7 @@ function init() {
 					}
 				});
 			} else {
-				var children = getGroupById(defaultBar, id);
+				var children = getGroupById(defaultBars, id);
 				console.log(children);
 				var urls = Array.map(function(c){
 						return c.url;
@@ -1493,7 +1505,7 @@ function init() {
 		style.textContent = localStorage.userstyle;
 		style.inject(document.body);
 	}
-})(window, defaultBar);
+})(window, defaultBars);
 
 onerror = function(){
 	chrome.extension.sendRequest({error: [].slice.call(arguments)})
