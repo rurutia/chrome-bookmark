@@ -45,38 +45,27 @@ data.forEach(function(group, i) {
 	defaultBars.push(group);
 });
 
-//function getGroupById(data, id) {
-//	result = data.filter(function(d) {
-//		return d.id == id;
-//	});
-//	if(result.length === 1) {
-//		return result;
-//	} else if(result.children) {
-//		return getGroupById(result.children, id);
-//	} else {
-//		return;
-//	}
-//};
+var getGroupById = (function() {
+	var bookmark;
 
-function getGroupById(data, id) {
-	if(data) {
+	function _getGroupById(data, id) {
 		result = data.filter(function(d) {
 			return d.parentId == id;
 		});
-		//console.log("result");
-		//console.log(result.length);
-		//console.log(data.children);
 		if(result.length > 0) {
-			return result;
+			bookmark = bookmark || result
 		} else {
 			data.forEach(function(m, i) {
-				console.log(i);
-				console.log(m);
-				return getGroupById(m.children, id);
-			})
+				if(m.children) {
+					return getGroupById(m.children, id);
+				}
+			});
 		}
+	};
 
-	}
-	return null;
-};
+	return function(data, id) {
+		_getGroupById(data, id);	
+		return bookmark;
+	};
+})();
 

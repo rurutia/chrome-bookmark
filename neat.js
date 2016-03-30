@@ -195,8 +195,12 @@ function init() {
 			if(id > 0) {
 				chrome.bookmarks.getChildren(id, function(children){
 					var html = generateHTML(children, rememberState, opens, parseInt(parent.parentNode.dataset.level) + 1);
-					var ul = parser.parseFromString(html, "text/xml");
+					// var ul = parser.parseFromString(html, "text/xml");
+					var div = document.createElement('div');
+  					div.innerHTML = html;
+  					var ul = div.querySelector('ul');
 					ul.inject(parent);
+					div.destroy();	
 					setTimeout(adaptBookmarkTooltips, 100);
 				});
 			} else {
@@ -691,7 +695,6 @@ function init() {
 					}
 				});
 			} else {
-				console.log("id: " + id);
 				var children = getGroupById(defaultBars, id);
 				console.log(children);
 				var urls = Array.map(function(c){
