@@ -192,8 +192,13 @@ function init() {
 		var children = parent.querySelector('ul');
 		if (!children){
 			var id = parent.id.replace('neat-tree-item-', '');
+												console.log("opens0:");
+				console.log(opens);
 			if(id > 0) {
 				chrome.bookmarks.getChildren(id, function(children){
+									console.log("opens1:");
+				console.log(opens);
+
 					var html = generateHTML(children, rememberState, opens, parseInt(parent.parentNode.dataset.level) + 1);
 					// var ul = parser.parseFromString(html, "text/xml");
 					var div = document.createElement('div');
@@ -205,16 +210,19 @@ function init() {
 				});
 			} else {
 				console.log(defaultBars);
-				//var children = getGroupById(defaultBars, id);
-				//console.log(children);
-				//console.log(opens);
-				// var html = generateHTML(children, rememberState, opens, parseInt(parent.parentNode.dataset.level) + 1);
-				// var div = document.createElement('div');
-				// div.innerHTML = html;
-				// var ul = div.querySelector('ul');
-				// ul.inject(parent);
-				// div.destroy();
-				// setTimeout(adaptBookmarkTooltips, 100);
+				console.log("id");
+				console.log(id);
+				var children = getGroupById(defaultBars, id);
+				console.log(children);
+				console.log("opens2:");
+				console.log(opens);
+				var html = generateHTML(children, rememberState, opens, parseInt(parent.parentNode.dataset.level) + 1);
+				var div = document.createElement('div');
+				div.innerHTML = html;
+				var ul = div.querySelector('ul');
+				ul.inject(parent);
+				div.destroy();
+				setTimeout(adaptBookmarkTooltips, 100);
 			}
 		}
 		if (closeUnusedFolders && expanded){
@@ -226,11 +234,12 @@ function init() {
 				}
 			}
 		}
-		var opens = $tree.querySelectorAll('li.open');
-		opens = Array.map(function(li){
+		console.log("-------");
+		var opens2 = $tree.querySelectorAll('li.open');
+		opens2 = Array.map(function(li){
 			return li.id.replace('neat-tree-item-', '');
-		}, opens);
-		localStorage.opens = JSON.stringify(opens);
+		}, opens2);
+		localStorage.opens = JSON.stringify(opens2);
 	});
 	// Force middle clicks to trigger the focus event
 	$tree.addEventListener('mouseup', function(e){

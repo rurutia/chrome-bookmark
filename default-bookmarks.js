@@ -53,17 +53,18 @@ var getGroupById = (function() {
 			return d.parentId == id;
 		});
 		if(result.length > 0) {
-			bookmark = bookmark || result
+			bookmark = bookmark || result;
 		} else {
 			data.forEach(function(m, i) {
 				if(m.children) {
-					return getGroupById(m.children, id);
+					return _getGroupById(m.children, id);
 				}
-			});
+			});	
 		}
 	};
 
 	return function(data, id) {
+		bookmark = null;
 		_getGroupById(data, id);	
 		return bookmark;
 	};
