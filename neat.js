@@ -8,6 +8,7 @@ function init() {
 
 //  defaultBars is from default-bookmarks.js
 (function(window, defaultBars){
+	var parser = new DOMParser();
 	// var document = window.document;
 	var chrome = window.chrome;
 	// var localStorage = window.localStorage;
@@ -179,11 +180,11 @@ function init() {
 	
 	var closeUnusedFolders = localStorage.closeUnusedFolders;
 	$tree.addEventListener('click', function(e){
-		if (e.button != 0) return;
+		console.log("clicking on tree....");
+		if (e.button != 0) return; // only left click is valid
 		var el = e.target;
-		var tagName = el.tagName;
-		if (tagName != 'SPAN') return;
-		if (e.shiftKey || e.ctrlKey) return;
+		console.log("clicking element: " + el.tagName);
+		if (el.tagName != 'SPAN' || e.shiftKey || e.ctrlKey) return;
 		var parent = el.parentNode;
 		parent.toggleClass('open');
 		var expanded = parent.hasClass('open');
@@ -194,17 +195,15 @@ function init() {
 			if(id > 0) {
 				chrome.bookmarks.getChildren(id, function(children){
 					var html = generateHTML(children, rememberState, opens, parseInt(parent.parentNode.dataset.level) + 1);
-					var div = document.createElement('div');
-					div.innerHTML = html;
-					var ul = div.querySelector('ul');
+					var ul = parser.parseFromString(html, "text/xml");
 					ul.inject(parent);
-					div.destroy();
 					setTimeout(adaptBookmarkTooltips, 100);
 				});
 			} else {
-				var children = getGroupById(defaultBars, id);
-				console.log(children);
-				console.log(opens);
+				console.log(defaultBars);
+				//var children = getGroupById(defaultBars, id);
+				//console.log(children);
+				//console.log(opens);
 				// var html = generateHTML(children, rememberState, opens, parseInt(parent.parentNode.dataset.level) + 1);
 				// var div = document.createElement('div');
 				// div.innerHTML = html;
@@ -692,18 +691,19 @@ function init() {
 					}
 				});
 			} else {
+				console.log("id: " + id);
 				var children = getGroupById(defaultBars, id);
 				console.log(children);
 				var urls = Array.map(function(c){
 						return c.url;
 					}, children).clean();
-					var urlsLen = urls.length;
-					if (!urlsLen) return;
-					if (ctrlMeta){ // ctrl/meta click
-						actions.openBookmarks(urls, middleClickBgTab ? shift : !shift);
-					} else if (shift){ // shift click
-						actions.openBookmarksNewWindow(urls);
-					}
+				var urlsLen = urls.length;
+				if (!urlsLen) return;
+				if (ctrlMeta){ // ctrl/meta click
+					actions.openBookmarks(urls, middleClickBgTab ? shift : !shift);
+				} else if (shift){ // shift click
+					actions.openBookmarksNewWindow(urls);
+				}
 			}
 
 		}
